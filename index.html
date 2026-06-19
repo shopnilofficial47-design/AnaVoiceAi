@@ -13,7 +13,7 @@
         textarea { width: 100%; height: 120px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 15px; color: #ffffff; font-size: 16px; resize: none; outline: none; margin-bottom: 20px; }
         button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: linear-gradient(90deg, #00d2ff, #3a7bd5); color: #ffffff; font-size: 16px; font-weight: bold; cursor: pointer; }
         button:disabled { background: #555; cursor: not-allowed; }
-        #status-msg { margin-top: 15px; font-size: 14px; color: #ff4b4b; display: none; }
+        #status-msg { margin-top: 15px; font-size: 14px; color: #00d2ff; display: none; }
         audio { width: 100%; margin-top: 20px; display: none; border-radius: 30px; }
     </style>
 </head>
@@ -28,13 +28,13 @@
         <button id="generate-btn">ভয়েস তৈরি করুন</button>
         
         <div id="status-msg"></div>
-        
         <audio id="audio-player" controls></audio>
     </div>
 
     <script>
         const API_TOKEN = "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"; 
-        const API_URL = "/api/tts";
+        // সরাসরি লিংকে আবার ফিরে গেলাম
+        const API_URL = "https://api-inference.huggingface.co/models/facebook/mms-tts-ben";
 
         const textInput = document.getElementById('text-input');
         const generateBtn = document.getElementById('generate-btn');
@@ -49,11 +49,11 @@
             generateBtn.innerText = "প্রসেসিং হচ্ছে...";
             statusMsg.style.display = "block";
             statusMsg.style.color = "#00d2ff";
-            statusMsg.innerText = "সার্ভারের সাথে কানেক্ট হচ্ছে...";
+            statusMsg.innerText = "এআই ভয়েস তৈরি করছে, ২০-৩০ সেকেন্ড অপেক্ষা করুন...";
             audioPlayer.style.display = "none";
 
             try {
-                const response = await fetch(API_URL, {
+                let response = await fetch(API_URL, {
                     headers: { 
                         "Authorization": `Bearer ${API_TOKEN}`,
                         "Content-Type": "application/json"
@@ -62,15 +62,15 @@
                     body: JSON.stringify({ inputs: text }),
                 });
 
+                // এআই যদি ঘুমিয়ে থাকে, তবে এই ব্লকটি কাজ করবে
+                if (response.status === 503) {
+                    const json = await response.json();
+                    let waitTime = Math.round(json.estimated_time || 20);
+                    throw new Error(`এআই সার্ভার ঘুমিয়ে ছিল, এখন চালু হচ্ছে। দয়া করে ${waitTime} সেকেন্ড পর আবার বাটনে চাপ দিন।`);
+                }
+
                 if (!response.ok) {
-                    let errorText = "অজানা এরর";
-                    try {
-                        const errJson = await response.json();
-                        errorText = errJson.error || JSON.stringify(errJson);
-                    } catch(e) {
-                        errorText = response.status + " " + response.statusText;
-                    }
-                    throw new Error("Error: " + errorText);
+                    throw new Error("সার্ভার বা কানেকশনে সমস্যা। আবার ট্রাই করুন।");
                 }
 
                 const audioBlob = await response.blob();
