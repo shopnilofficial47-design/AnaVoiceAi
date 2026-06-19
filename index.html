@@ -14,7 +14,6 @@
         textarea:focus { border-color: #00d2ff; background: rgba(0, 0, 0, 0.4); }
         button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: linear-gradient(90deg, #00d2ff, #3a7bd5); color: #ffffff; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         button:active { transform: scale(0.98); }
-        button:disabled { background: #555; cursor: not-allowed; }
         #status-msg { margin-top: 15px; font-size: 14px; color: #00d2ff; display: none; }
         audio { width: 100%; margin-top: 20px; display: none; border-radius: 30px; outline: none; }
     </style>
@@ -23,76 +22,64 @@
 
     <div class="app-container">
         <h2>বাংলা AI ভয়েস স্টুডিও</h2>
-        <p class="subtitle">প্রো এআই মডেল (মানুষের কণ্ঠ)</p>
+        <p class="subtitle">গুগল ক্লাউড এআই ভয়েস</p>
         
-        <textarea id="text-input" placeholder="এখানে বাংলায় কিছু লিখুন..."></textarea>
+        <textarea id="text-input" placeholder="এখানে বাংলায় কিছু লিখুন... (সর্বোচ্চ ২০০ অক্ষর)"></textarea>
         
         <button id="generate-btn">ভয়েস তৈরি করুন</button>
         
-        <div id="status-msg"></div>
+        <div id="status-msg">ভয়েস তৈরি হচ্ছে...</div>
         <audio id="audio-player" controls></audio>
     </div>
 
     <script>
-        // API Key-কে ২ ভাগ করা হলো যাতে রোবট স্ক্যান করে ডিলিট করতে না পারে!
-        const part1 = "hf_XBnTcpgMnPz";
-        const part2 = "oSwptbeIJINipPxGSAkkOlI";
-        const API_TOKEN = part1 + part2; // ব্রাউজার নিজে জোড়া লাগিয়ে নেবে
-        
-        const API_URL = "https://api-inference.huggingface.co/models/facebook/mms-tts-ben";
-
         const textInput = document.getElementById('text-input');
         const generateBtn = document.getElementById('generate-btn');
         const statusMsg = document.getElementById('status-msg');
         const audioPlayer = document.getElementById('audio-player');
 
-        generateBtn.addEventListener('click', async () => {
-            const text = textInput.value.trim();
-            if (!text) { alert("দয়া করে বক্সে কিছু লিখুন!"); return; }
+        generateBtn.addEventListener('click', () => {
+            let text = textInput.value.trim();
+            
+            if (!text) { 
+                alert("দয়া করে বক্সে কিছু লিখুন!"); 
+                return; 
+            }
 
+            // গুগলের এপিআই একবারে ২০০ অক্ষরের বেশি নিতে পারে না
+            if (text.length > 200) {
+                alert("দয়া করে লেখাটি ২০০ অক্ষরের মধ্যে রাখুন!");
+                return;
+            }
+
+            // লোডিং এনিমেশন
             generateBtn.disabled = true;
-            generateBtn.innerText = "প্রসেসিং হচ্ছে...";
             statusMsg.style.display = "block";
-            statusMsg.style.color = "#00d2ff";
-            statusMsg.innerText = "এআই ভয়েস তৈরি করছে, দয়া করে ২০-৩০ সেকেন্ড অপেক্ষা করুন...";
             audioPlayer.style.display = "none";
 
-            try {
-                let response = await fetch(API_URL, {
-                    headers: { 
-                        "Authorization": `Bearer ${API_TOKEN}`,
-                        "Content-Type": "application/json"
-                    },
-                    method: "POST",
-                    body: JSON.stringify({ inputs: text }),
-                });
+            // গুগলের ক্লাউড টেক্সট-টু-স্পিচ লিংক (কোনো Fetch বা CORS লাগবে না)
+            const googleTTS_URL = `https://translate.google.com/translate_tts?ie=UTF-8&tl=bn&client=tw-ob&q=${encodeURIComponent(text)}`;
 
-                // এআই ঘুমালে ব্রাউজার তাকে জাগাবে
-                if (response.status === 503) {
-                    throw new Error("এআই সার্ভার ঘুমিয়ে ছিল, এখন চালু হচ্ছে। দয়া করে ২০ সেকেন্ড পর আবার বাটনে চাপ দিন!");
-                }
-
-                if (!response.ok) {
-                    throw new Error("সার্ভারে সমস্যা হয়েছে, আবার ট্রাই করুন।");
-                }
-
-                const audioBlob = await response.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
-
-                audioPlayer.src = audioUrl;
+            // অডিও সোর্স সরাসরি প্লেয়ারে বসিয়ে দেওয়া
+            audioPlayer.src = googleTTS_URL;
+            
+            // অডিও লোড হওয়া পর্যন্ত অপেক্ষা করা
+            audioPlayer.onloadeddata = () => {
                 audioPlayer.style.display = "block";
                 audioPlayer.play();
                 statusMsg.style.display = "none";
-
-            } catch (error) {
-                statusMsg.style.color = "#ff4b4b";
-                statusMsg.innerText = error.message;
-            } finally {
                 generateBtn.disabled = false;
-                generateBtn.innerText = "ভয়েস তৈরি করুন";
-            }
+            };
+
+            // যদি কোনো কারণে নেটওয়ার্ক এরর হয়
+            audioPlayer.onerror = () => {
+                statusMsg.style.color = "#ff4b4b";
+                statusMsg.innerText = "ইন্টারনেট কানেকশন চেক করুন!";
+                generateBtn.disabled = false;
+            };
         });
     </script>
 
 </body>
 </html>
+
