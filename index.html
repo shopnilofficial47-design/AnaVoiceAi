@@ -3,118 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bengali AI Voice Generator</title>
+    <title>বাংলা AI ভয়েস স্টুডিও</title>
     <style>
+        /* বেসিক সেটআপ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
         body {
-            font-family: Arial, sans-serif;
-            background-color: #1e1e2f;
-            color: white;
+            /* সুন্দর একটি ডার্ক গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড */
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #ffffff;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            min-height: 100vh;
+            padding: 20px;
         }
-        .container {
-            background: #2a2a40;
+        /* গ্লাসের মতো দেখতে মূল বক্স (Glassmorphism) */
+        .app-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
             width: 100%;
-            max-width: 450px;
+            max-width: 400px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             text-align: center;
         }
-        h2 {
-            margin-bottom: 20px;
-            color: #00d2ff;
+        .app-container h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            /* লেখার মধ্যে নিয়ন কালার */
+            background: -webkit-linear-gradient(#00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+        .app-container p.subtitle {
+            font-size: 13px;
+            color: #b0bec5;
+            margin-bottom: 25px;
+        }
+        /* টেক্সট লেখার জায়গা */
         textarea {
             width: 100%;
             height: 120px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             padding: 15px;
-            border: 1px solid #444;
-            border-radius: 8px;
-            background: #1e1e2f;
-            color: white;
-            margin-bottom: 20px;
+            color: #ffffff;
             font-size: 16px;
             resize: none;
-            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+            margin-bottom: 20px;
         }
+        textarea:focus {
+            border-color: #00d2ff;
+            background: rgba(0, 0, 0, 0.4);
+        }
+        /* স্টাইলিশ বাটন */
         button {
-            background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
-            color: white;
+            width: 100%;
+            padding: 15px;
             border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            color: #ffffff;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            width: 100%;
-            transition: opacity 0.3s;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         button:hover {
-            opacity: 0.8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 210, 255, 0.4);
         }
         button:disabled {
             background: #555;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
-        #status-text {
-            color: #00d2ff;
+        /* লোডিং টেক্সট অ্যানিমেশন */
+        #status-msg {
             margin-top: 15px;
             font-size: 14px;
+            color: #00d2ff;
             display: none;
+            animation: pulse 1.5s infinite;
         }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        /* অডিও প্লেয়ার */
         audio {
             width: 100%;
             margin-top: 20px;
             display: none;
-            border-radius: 8px;
+            border-radius: 30px;
+            outline: none;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>বাংলা AI ভয়েস জেনারেটর</h2>
-        <p style="font-size: 13px; color: #aaa; margin-top: -10px;">Powered by Hugging Face AI</p>
+    <div class="app-container">
+        <h2>বাংলা AI ভয়েস স্টুডিও</h2>
+        <p class="subtitle">আপনার লেখাকে দিন কথার রূপ</p>
         
-        <textarea id="text-input" placeholder="এখানে বাংলায় কিছু লিখুন..."></textarea>
+        <textarea id="text-input" placeholder="এখানে বাংলায় কিছু লিখুন... (যেমন: আমি এআই দিয়ে ওয়েবসাইট বানিয়েছি)"></textarea>
         
         <button id="generate-btn">ভয়েস তৈরি করুন</button>
         
-        <p id="status-text">এআই মডেল ভয়েস তৈরি করছে, দয়া করে কয়েক সেকেন্ড অপেক্ষা করুন...</p>
+        <div id="status-msg">এআই প্রসেস করছে, একটু অপেক্ষা করুন...</div>
+        
         <audio id="audio-player" controls></audio>
     </div>
 
     <script>
-        // আপনার দেওয়া Hugging Face API Key
-        const API_TOKEN = "Hf_FjkNLCQOtjCKZKsaQKgGfKjcPAvtkxpqxh"; 
+        // API Key-এর বড় হাতের H ঠিক করে ছোট হাতের h দেওয়া হয়েছে
+        const API_TOKEN = "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"; 
         
-        // এআই মডেলের লিংক (Meta এর বাংলা মডেল)
+        // বাংলা এআই মডেল
         const API_URL = "https://api-inference.huggingface.co/models/facebook/mms-tts-ben";
 
         const textInput = document.getElementById('text-input');
         const generateBtn = document.getElementById('generate-btn');
-        const statusText = document.getElementById('status-text');
+        const statusMsg = document.getElementById('status-msg');
         const audioPlayer = document.getElementById('audio-player');
 
         generateBtn.addEventListener('click', async () => {
             const text = textInput.value.trim();
             
             if (!text) {
-                alert("দয়া করে বক্সে কিছু লিখুন!");
+                alert("দয়া করে বক্সে কিছু লিখুন!");
                 return;
             }
 
-            // UI আপডেট (লোডিং বোঝানোর জন্য)
+            // বাটন লোডিং অবস্থায় নেওয়া
             generateBtn.disabled = true;
-            statusText.style.display = "block";
+            generateBtn.innerText = "প্রসেসিং হচ্ছে...";
+            statusMsg.style.display = "block";
             audioPlayer.style.display = "none";
 
             try {
-                // এআই সার্ভারে রিকোয়েস্ট পাঠানো
                 const response = await fetch(API_URL, {
                     headers: { 
                         "Authorization": `Bearer ${API_TOKEN}`,
@@ -125,26 +165,29 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error("AI মডেল এই মুহূর্তে ব্যস্ত আছে। একটু পর আবার চেষ্টা করুন।");
+                    // এআই মডেল স্লিপ মুডে থাকলে এরর হ্যান্ডেলিং
+                    const errorData = await response.json().catch(() => ({}));
+                    if (errorData.error && errorData.error.includes("loading")) {
+                         throw new Error("AI মডেলটি ঘুমিয়ে ছিল, এখন চালু হচ্ছে। ২০-৩০ সেকেন্ড পর আবার ট্রাই করুন!");
+                    }
+                    throw new Error("Failed to fetch: সার্ভার রিজেক্ট করেছে। আবার চেষ্টা করুন।");
                 }
 
-                // এআই থেকে আসা অডিও ফাইল (Blob) রিসিভ করা
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
 
-                // অডিও প্লেয়ারে যুক্ত করা
+                // অডিও প্লে করা
                 audioPlayer.src = audioUrl;
                 audioPlayer.style.display = "block";
-                
-                // স্বয়ংক্রিয়ভাবে অডিও প্লে করা
                 audioPlayer.play();
 
             } catch (error) {
                 alert(error.message);
             } finally {
-                // কাজ শেষ হলে UI স্বাভাবিক করা
+                // কাজ শেষে বাটন স্বাভাবিক করা
                 generateBtn.disabled = false;
-                statusText.style.display = "none";
+                generateBtn.innerText = "ভয়েস তৈরি করুন";
+                statusMsg.style.display = "none";
             }
         });
     </script>
