@@ -13,7 +13,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         body {
-            /* সুন্দর একটি ডার্ক গ্রেডিয়েন্ট ব্যাকগ্রাউন্ড */
             background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             color: #ffffff;
             display: flex;
@@ -22,7 +21,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        /* গ্লাসের মতো দেখতে মূল বক্স (Glassmorphism) */
+        /* গ্লাসের মতো দেখতে মূল বক্স */
         .app-container {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(15px);
@@ -38,7 +37,6 @@
         .app-container h2 {
             font-size: 24px;
             margin-bottom: 5px;
-            /* লেখার মধ্যে নিয়ন কালার */
             background: -webkit-linear-gradient(#00d2ff, #3a7bd5);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -48,7 +46,6 @@
             color: #b0bec5;
             margin-bottom: 25px;
         }
-        /* টেক্সট লেখার জায়গা */
         textarea {
             width: 100%;
             height: 120px;
@@ -67,7 +64,6 @@
             border-color: #00d2ff;
             background: rgba(0, 0, 0, 0.4);
         }
-        /* স্টাইলিশ বাটন */
         button {
             width: 100%;
             padding: 15px;
@@ -90,7 +86,6 @@
             transform: none;
             box-shadow: none;
         }
-        /* লোডিং টেক্সট অ্যানিমেশন */
         #status-msg {
             margin-top: 15px;
             font-size: 14px;
@@ -103,7 +98,6 @@
             50% { opacity: 1; }
             100% { opacity: 0.6; }
         }
-        /* অডিও প্লেয়ার */
         audio {
             width: 100%;
             margin-top: 20px;
@@ -129,11 +123,11 @@
     </div>
 
     <script>
-        // API Key-এর বড় হাতের H ঠিক করে ছোট হাতের h দেওয়া হয়েছে
+        // আপনার API Key (সঠিক ফরমেটে)
         const API_TOKEN = "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"; 
         
-        // বাংলা এআই মডেল
-        const API_URL = "https://api-inference.huggingface.co/models/facebook/mms-tts-ben";
+        // Vercel Proxy লিংক (CORS এরর সমাধানের জন্য)
+        const API_URL = "/api/tts";
 
         const textInput = document.getElementById('text-input');
         const generateBtn = document.getElementById('generate-btn');
@@ -148,7 +142,6 @@
                 return;
             }
 
-            // বাটন লোডিং অবস্থায় নেওয়া
             generateBtn.disabled = true;
             generateBtn.innerText = "প্রসেসিং হচ্ছে...";
             statusMsg.style.display = "block";
@@ -165,18 +158,16 @@
                 });
 
                 if (!response.ok) {
-                    // এআই মডেল স্লিপ মুডে থাকলে এরর হ্যান্ডেলিং
                     const errorData = await response.json().catch(() => ({}));
                     if (errorData.error && errorData.error.includes("loading")) {
-                         throw new Error("AI মডেলটি ঘুমিয়ে ছিল, এখন চালু হচ্ছে। ২০-৩০ সেকেন্ড পর আবার ট্রাই করুন!");
+                         throw new Error("AI মডেলটি ঘুমিয়ে ছিল, চালু হচ্ছে। ২০-৩০ সেকেন্ড পর আবার ট্রাই করুন!");
                     }
-                    throw new Error("Failed to fetch: সার্ভার রিজেক্ট করেছে। আবার চেষ্টা করুন।");
+                    throw new Error("সার্ভার ব্যস্ত আছে। আবার চেষ্টা করুন।");
                 }
 
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
 
-                // অডিও প্লে করা
                 audioPlayer.src = audioUrl;
                 audioPlayer.style.display = "block";
                 audioPlayer.play();
@@ -184,7 +175,6 @@
             } catch (error) {
                 alert(error.message);
             } finally {
-                // কাজ শেষে বাটন স্বাভাবিক করা
                 generateBtn.disabled = false;
                 generateBtn.innerText = "ভয়েস তৈরি করুন";
                 statusMsg.style.display = "none";
